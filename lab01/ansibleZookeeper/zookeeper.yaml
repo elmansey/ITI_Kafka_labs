@@ -1,0 +1,5 @@
+- name:  install zookeeper
+  hosts: zookeeper_servers
+  roles:
+  - ./zookeeper
+ 

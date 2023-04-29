@@ -1,0 +1,51 @@
+- name: update apt 
+  apt:
+   update_cache: yes
+
+- name: install java 8 
+  apt:
+    name: openjdk-8-jre-headless
+    state: present
+  
+- name: install kafka 
+  get_url:
+    url: "https://dlcdn.apache.org/kafka/3.4.0/kafka_2.13-3.4.0.tgz"
+    dest: /home/ansible/kafka_2.13-3.4.0.tgz
+
+- name: check if exists
+  stat:
+    path: /home/ansible/kafka_2.13-3.4.0
+  register: folder_status
+
+- name: untar kafka file 
+  unarchive:
+    src: /home/ansible/kafka_2.13-3.4.0.tgz
+    dest: /home/ansible/
+    remote_src: true
+  when: folder_status.stat.exists == false
+
+- name: create directory 
+  file:
+    path: /data/zookeeper
+    recurse: yes
+    state: directory
+    owner: ansible
+    group: ansible
+
+- name: copy zookeeper.properties file 
+  copy: 
+    src: "./zookeeper.properties"
+    dest: "/home/ansible/kafka_2.13-3.4.0/config/zookeeper.properties"
+    owner: ansible
+    group: ansible
+
+- name: make id files
+  delegate_to: "{{ item.server }}"
+  shell: echo "{{ item.id }}" > /data/zookeeper/myid
+  loop:
+  - {server: "server1",id: 1}
+  - {server: "server2",id: 2}
+  - {server: "server3",id: 3}
+  
+- name: run zookeeper
+  shell: ./home/ansible/kafka_2.13-3.4.0//bin/zookeeper-server-start.sh -daemon   /home/ansible/kafka_2.13-3.4.0/config/zookeeper.properties
